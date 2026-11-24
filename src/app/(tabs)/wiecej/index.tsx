@@ -12,7 +12,8 @@ function MenuLink({ href, label }: { href: Href; label: string }) {
     <Link href={href} asChild>
       <Pressable
         accessibilityRole="link"
-        style={[styles.card, styles.link, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        // Link z asChild nie przyjmuje tablicy stylów u dziecka — trzeba ją spłaszczyć.
+        style={StyleSheet.flatten([styles.card, styles.link, { backgroundColor: theme.card, borderColor: theme.border }])}>
         <Text style={[styles.name, { color: theme.text }]}>{label}</Text>
         <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
       </Pressable>

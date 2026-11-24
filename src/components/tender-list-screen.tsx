@@ -62,7 +62,10 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
       />
       {first && !first.profileReady && view === 'dopasowane' ? (
         <Link href="/firma" asChild>
-          <Pressable style={[styles.banner, { backgroundColor: theme.warnSoft }]} accessibilityRole="link">
+          <Pressable
+            // Link z asChild nie przyjmuje tablicy stylów u dziecka — trzeba ją spłaszczyć.
+            style={StyleSheet.flatten([styles.banner, { backgroundColor: theme.warnSoft }])}
+            accessibilityRole="link">
             <Text style={[styles.bannerText, { color: theme.warn }]}>
               Uzupełnij profil firmy (kody CPV lub słowa kluczowe), aby zobaczyć dopasowane przetargi. ›
             </Text>
