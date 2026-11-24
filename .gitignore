@@ -42,3 +42,7 @@ example
 /ios
 /android
 podglad/
+
+# Firebase (zapisywany w CI z sekretu)
+GoogleService-Info.plist
+google-services.json

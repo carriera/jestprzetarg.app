@@ -23,3 +23,4 @@ export type ConditionRating = CompanyAssessment['warunki'][number]['ocena'];
 export type DocumentStatus = CompanyAssessment['dokumenty'][number]['status'];
 
 export type TenderView = 'dopasowane' | 'wszystkie' | 'ulubione' | 'ulubione-zakonczone' | 'ukryte' | 'archiwum';
+export type PushPreferences = Req<S['PushPreferences']>;

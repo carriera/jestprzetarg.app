@@ -7,6 +7,7 @@ import { AppState } from 'react-native';
 import { ApiError } from '@/api/client';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePush } from '@/push/use-push';
 import { SessionProvider, useSession } from '@/session/session';
 
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +23,8 @@ function RootNavigator() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = Colors[scheme];
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+
+  usePush(state.status === 'signedIn');
 
   useEffect(() => {
     if (state.status !== 'loading') SplashScreen.hideAsync();

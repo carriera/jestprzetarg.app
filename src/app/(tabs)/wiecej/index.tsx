@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Link, Stack, type Href } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -38,6 +38,14 @@ export default function MoreTab() {
             {[companyName, user.role === 'admin' ? 'administrator' : 'członek zespołu'].filter(Boolean).join(' · ')}
           </Text>
         </View>
+        <Link href={'/wiecej/powiadomienia' as Href} asChild>
+          <Pressable
+            accessibilityRole="link"
+            style={[styles.card, styles.link, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.name, { color: theme.text }]}>Powiadomienia</Text>
+            <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+          </Pressable>
+        </Link>
         <Pressable
           onPress={confirmSignOut}
           disabled={busy}
@@ -54,6 +62,8 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, gap: Spacing.three },
   card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, padding: Spacing.three, gap: 4 },
   name: { fontSize: 18, fontWeight: '600' },
+  link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  chevron: { fontSize: 24 },
   meta: { fontSize: 15 },
   button: { borderWidth: 1, borderRadius: Radius.field, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontSize: 16, fontWeight: '600' },

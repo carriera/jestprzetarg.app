@@ -6,6 +6,8 @@
 #   ASC_ISSUER_ID   – Issuer ID z tej samej strony
 #   ASC_KEY_P8      – cała treść pliku AuthKey_XXXX.p8
 #   APPLE_TEAM_ID   – Team ID z developer.apple.com → Membership
+#   GOOGLE_SERVICE_INFO_PLIST – plik GoogleService-Info.plist z Firebase (iOS, bundle ID pl.jestprzetarg.app) zakodowany base64
+#                              (base64 -w0 GoogleService-Info.plist); w Firebase musi być wgrany klucz APNs (.p8)
 # Klucz musi mieć rolę Admin albo App Manager (zarządzanie certyfikatami), a aplikacja o identyfikatorze
 # pl.jestprzetarg.app musi już istnieć w App Store Connect.
 name: iOS TestFlight
@@ -36,6 +38,13 @@ jobs:
             c.expo.ios.buildNumber = process.env.GITHUB_RUN_NUMBER;
             fs.writeFileSync('app.json', JSON.stringify(c, null, 2));
           "
+
+      - name: Write Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          test -n "$GOOGLE_SERVICE_INFO_PLIST" || { echo "Brak sekretu GOOGLE_SERVICE_INFO_PLIST"; exit 1; }
+          printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > GoogleService-Info.plist
 
       - name: Generate native project
         run: npx expo prebuild --platform ios --clean

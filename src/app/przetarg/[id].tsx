@@ -19,11 +19,12 @@ export default function TenderScreen() {
   const theme = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const id = Number(useLocalSearchParams<{ id: string }>().id);
+  const params = useLocalSearchParams<{ id: string; section?: string }>();
+  const id = Number(params.id);
   const { data: tender, error, isPending, refetch } = useTender(id);
   const favorite = useTenderFlag(id, 'favorite');
   const hidden = useTenderFlag(id, 'hidden');
-  const [section, setSection] = useState<Section>('analiza');
+  const [section, setSection] = useState<Section>(params.section === 'wynik' ? 'wynik' : 'analiza');
   const [pulling, setPulling] = useState(false);
 
   const isNew = tender?.isNew ?? false;
@@ -96,7 +97,7 @@ export default function TenderScreen() {
               selected={section}
               onSelect={setSection}
             />
-            {section === 'analiza' ? <AnalysisSection tenderId={tender.id} analysis={tender.analysis} /> : null}
+            {section === 'analiza' || (section === 'wynik' && !tender.result) ? <AnalysisSection tenderId={tender.id} analysis={tender.analysis} /> : null}
             {section === 'ogloszenie' ? <NoticeSection tender={tender} /> : null}
             {section === 'wynik' && tender.result ? <ResultSection result={tender.result} /> : null}
           </>

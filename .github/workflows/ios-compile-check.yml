@@ -1,0 +1,59 @@
+# Sprawdza, czy natywny projekt iOS (z Firebase) się kompiluje. Bez kont Apple i bez podpisywania:
+# używa atrapy GoogleService-Info.plist i buduje na symulator. Uruchamiany ręcznie.
+name: iOS compile check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: npm ci
+
+      - name: Dummy Firebase config
+        run: |
+          cat > GoogleService-Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>API_KEY</key><string>AIzaSyDummyDummyDummyDummyDummyDummyDum</string>
+            <key>GCM_SENDER_ID</key><string>123456789012</string>
+            <key>PLIST_VERSION</key><string>1</string>
+            <key>BUNDLE_ID</key><string>pl.jestprzetarg.app</string>
+            <key>PROJECT_ID</key><string>dummy-project</string>
+            <key>STORAGE_BUCKET</key><string>dummy-project.appspot.com</string>
+            <key>IS_ADS_ENABLED</key><false/>
+            <key>IS_ANALYTICS_ENABLED</key><false/>
+            <key>IS_APPINVITE_ENABLED</key><false/>
+            <key>IS_GCM_ENABLED</key><true/>
+            <key>IS_SIGNIN_ENABLED</key><true/>
+            <key>GOOGLE_APP_ID</key><string>1:123456789012:ios:0123456789abcdef012345</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - run: npx expo prebuild --platform ios --clean
+
+      - name: Build for simulator
+        run: |
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          xcodebuild build \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 80
+          exit "${PIPESTATUS[0]}"

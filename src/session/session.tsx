@@ -4,6 +4,7 @@ import { createContext, use, useCallback, useEffect, useMemo, useState, type Rea
 
 import { api, setAuthToken, setUnauthorizedHandler, unwrap } from '@/api/client';
 import type { User } from '@/api/types';
+import { getRegisteredPushToken } from '@/push/push';
 
 const TOKEN_KEY = 'jp.token';
 const USER_KEY = 'jp.user';
@@ -93,7 +94,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     // Unieważnienie tokenu na serwerze jest „w miarę możliwości” — lokalnie wylogowujemy zawsze.
-    await api.POST('/auth/logout', { body: {} }).catch(() => {});
+    // Z pushToken serwer wyrejestruje też to urządzenie z powiadomień.
+    const pushToken = getRegisteredPushToken() ?? undefined;
+    await api.POST('/auth/logout', { body: { pushToken } }).catch(() => {});
     await clear(false);
   }, [clear]);
 
