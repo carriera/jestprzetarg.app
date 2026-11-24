@@ -36,11 +36,30 @@ const auth: Middleware = {
   onResponse({ request, response }) {
     // 401 przy logowaniu to złe hasło, nie wygasła sesja — reagujemy tylko na żądania z tokenem.
     if (response.status === 401 && request.headers.has('Authorization')) onUnauthorized();
-    return response;
+    // Celowo nic nie zwracamy: openapi-fetch sprawdza zwróconą wartość przez `instanceof Response`,
+    // a odpowiedź z `fetch` w React Native tego testu nie przechodzi i każde żądanie kończyło się wyjątkiem.
   },
 };
 
-export const api = createClient<paths>({ baseUrl: API_URL });
+/**
+ * openapi-fetch woła `fetch(new Request(...))`. Rozpakowujemy żądanie do postaci (adres, opcje), żeby nie zależeć
+ * od tego, czy `fetch` w React Native przyjmuje obiekt Request — ta ścieżka jest sprawdzona na urządzeniu.
+ */
+async function nativeFetch(request: Request): Promise<Response> {
+  const headers: Record<string, string> = {};
+  request.headers.forEach((value, name) => {
+    headers[name] = value;
+  });
+  const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
+  return fetch(request.url, {
+    method: request.method,
+    headers,
+    body: hasBody ? await request.text() : undefined,
+    signal: request.signal ?? undefined,
+  });
+}
+
+export const api = createClient<paths>({ baseUrl: API_URL, fetch: nativeFetch });
 api.use(auth);
 
 type Result<T> = { data?: T; error?: unknown; response: Response };
@@ -50,11 +69,13 @@ export async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
   let result: Result<T>;
   try {
     result = await call;
-  } catch {
+  } catch (cause) {
+    if (__DEV__) console.warn('[api] żądanie nie doszło do serwera:', cause);
     throw new ApiError(0, 'network', 'Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.');
   }
   if (result.response.ok && result.data !== undefined) return result.data;
   const err = (result.error as { error?: { code?: string; message?: string } } | undefined)?.error;
+  if (__DEV__) console.warn('[api]', result.response.url, result.response.status, err?.code ?? JSON.stringify(result.error));
   throw new ApiError(
     result.response.status,
     err?.code ?? 'unknown',

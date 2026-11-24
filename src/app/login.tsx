@@ -36,6 +36,7 @@ export default function LoginScreen() {
     try {
       await signIn(email.trim(), password);
     } catch (e) {
+      if (__DEV__) console.warn('[login]', e);
       setError(errorMessage(e));
       setBusy(false);
     }
