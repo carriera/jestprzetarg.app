@@ -19,3 +19,10 @@ export function shortDate(iso: string | null): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
+
+export function money(value: number | null): string {
+  if (value === null) return '—';
+  const [int, frac] = value.toFixed(2).split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${grouped}${frac === '00' ? '' : `,${frac}`} zł`;
+}

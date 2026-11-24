@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Tender } from '@/api/types';
 import { Radius, Spacing } from '@/constants/theme';
@@ -17,9 +18,10 @@ export function TenderCard({ tender }: { tender: Tender }) {
   const date = shortDate(tender.deadline);
 
   return (
-    <View
-      style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}
-      accessible
+    <Link href={{ pathname: '/przetarg/[id]', params: { id: tender.id } }} asChild>
+    <Pressable
+      style={({ pressed }) => [styles.card, { backgroundColor: theme.card, borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
+      accessibilityRole="link"
       accessibilityLabel={[
         tender.isNew ? 'Nowy.' : '',
         tender.title,
@@ -73,7 +75,8 @@ export function TenderCard({ tender }: { tender: Tender }) {
           {date ? <Text style={[styles.date, { color: theme.textSecondary }]}> · {date}</Text> : null}
         </Text>
       </View>
-    </View>
+    </Pressable>
+    </Link>
   );
 }
 

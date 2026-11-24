@@ -1,7 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { Colors } from '@/constants/theme';
@@ -9,6 +10,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SessionProvider, useSession } from '@/session/session';
 
 SplashScreen.preventAutoHideAsync();
+
+// Ulubione, ukryte i „obejrzane” zmieniają też inni członkowie zespołu, więc dane odświeżamy po powrocie do aplikacji.
+focusManager.setEventListener((setFocused) => {
+  const sub = AppState.addEventListener('change', (status) => setFocused(status === 'active'));
+  return () => sub.remove();
+});
 
 function RootNavigator() {
   const { state } = useSession();
@@ -39,6 +46,17 @@ function RootNavigator() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="przetarg/[id]"
+            options={{
+              headerShown: true,
+              title: '',
+              headerBackTitle: 'Wróć',
+              headerTintColor: colors.brand,
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: colors.background },
+            }}
+          />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="login" />

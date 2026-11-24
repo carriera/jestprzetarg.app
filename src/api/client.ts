@@ -65,3 +65,38 @@ export async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
 export function errorMessage(e: unknown): string {
   return e instanceof ApiError ? e.message : 'Coś poszło nie tak. Spróbuj ponownie.';
 }
+
+/**
+ * POST z długim limitem czasu. `fetch` w React Native zrywa na iOS połączenie po 60 s ciszy, a analiza AI
+ * odpowiada dopiero po 1–2 minutach — XMLHttpRequest pozwala ustawić własny limit.
+ */
+export function postLong<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const network = () =>
+      reject(new ApiError(0, 'network', 'Połączenie z serwerem zostało przerwane.'));
+    xhr.open('POST', `${API_URL}${path}`);
+    xhr.timeout = timeoutMs;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    if (authToken) xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+    xhr.onerror = network;
+    xhr.ontimeout = network;
+    xhr.onabort = network;
+    xhr.onload = () => {
+      let json: unknown = null;
+      try {
+        json = JSON.parse(xhr.responseText);
+      } catch {
+        // odpowiedź bez JSON-a obsługujemy niżej jako błąd serwera
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && json !== null) {
+        resolve(json as T);
+        return;
+      }
+      if (xhr.status === 401 && authToken) onUnauthorized();
+      const err = (json as { error?: { code?: string; message?: string } } | null)?.error;
+      reject(new ApiError(xhr.status, err?.code ?? 'unknown', err?.message ?? `Serwer odpowiedział błędem (${xhr.status}).`));
+    };
+    xhr.send(JSON.stringify(body));
+  });
+}
