@@ -13,7 +13,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "associatedDomains": [
+        "applinks:jestprzetarg.pl"
+      ]
     },
     "android": {
       "adaptiveIcon": {

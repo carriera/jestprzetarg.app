@@ -6,6 +6,20 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/session/session';
 
+function MenuLink({ href, label }: { href: Href; label: string }) {
+  const theme = useTheme();
+  return (
+    <Link href={href} asChild>
+      <Pressable
+        accessibilityRole="link"
+        style={[styles.card, styles.link, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.name, { color: theme.text }]}>{label}</Text>
+        <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+      </Pressable>
+    </Link>
+  );
+}
+
 export default function MoreTab() {
   const theme = useTheme();
   const { state, signOut } = useSession();
@@ -38,14 +52,11 @@ export default function MoreTab() {
             {[companyName, user.role === 'admin' ? 'administrator' : 'członek zespołu'].filter(Boolean).join(' · ')}
           </Text>
         </View>
-        <Link href={'/wiecej/powiadomienia' as Href} asChild>
-          <Pressable
-            accessibilityRole="link"
-            style={[styles.card, styles.link, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.name, { color: theme.text }]}>Powiadomienia</Text>
-            <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
-          </Pressable>
-        </Link>
+        <View style={styles.links}>
+          <MenuLink href={'/wiecej/powiadomienia' as Href} label="Powiadomienia" />
+          <MenuLink href={'/wiecej/ukryte' as Href} label="Ukryte przetargi" />
+          {user.role === 'admin' ? <MenuLink href={'/wiecej/zespol' as Href} label="Zespół i zaproszenia" /> : null}
+        </View>
         <Pressable
           onPress={confirmSignOut}
           disabled={busy}
@@ -62,6 +73,7 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, gap: Spacing.three },
   card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, padding: Spacing.three, gap: 4 },
   name: { fontSize: 18, fontWeight: '600' },
+  links: { gap: Spacing.two },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   chevron: { fontSize: 24 },
   meta: { fontSize: 15 },

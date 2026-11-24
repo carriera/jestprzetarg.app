@@ -17,6 +17,8 @@ type State =
 type Session = {
   state: State;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Zakłada konto z zaproszenia i od razu loguje. */
+  acceptInvite: (input: { token: string; password: string; name?: string; email?: string }) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -73,8 +75,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [clear]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const result = await unwrap(api.POST('/auth/login', { body: { email, password } }));
+  const establish = useCallback(async (result: { token?: string; user?: unknown }) => {
     if (!result.token || !result.user) throw new Error('Niepełna odpowiedź logowania');
     const user = result.user as User;
     setAuthToken(result.token);
@@ -92,6 +93,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      await establish(await unwrap(api.POST('/auth/login', { body: { email, password } })));
+    },
+    [establish],
+  );
+
+  const acceptInvite = useCallback(
+    async (input: { token: string; password: string; name?: string; email?: string }) => {
+      await establish(await unwrap(api.POST('/auth/accept-invite', { body: input })));
+    },
+    [establish],
+  );
+
   const signOut = useCallback(async () => {
     // Unieważnienie tokenu na serwerze jest „w miarę możliwości” — lokalnie wylogowujemy zawsze.
     // Z pushToken serwer wyrejestruje też to urządzenie z powiadomień.
@@ -100,6 +115,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await clear(false);
   }, [clear]);
 
-  const value = useMemo(() => ({ state, signIn, signOut }), [state, signIn, signOut]);
+  const value = useMemo(() => ({ state, signIn, acceptInvite, signOut }), [state, signIn, acceptInvite, signOut]);
   return <SessionContext value={value}>{children}</SessionContext>;
 }

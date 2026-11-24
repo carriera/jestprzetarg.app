@@ -1,5 +1,15 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextInputProps,
+  type ViewStyle,
+} from 'react-native';
 
 import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -67,4 +77,67 @@ const styles = StyleSheet.create({
   noticeText: { fontSize: 14, lineHeight: 20 },
   button: { borderRadius: Radius.field, minHeight: 48, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontSize: 16, fontWeight: '600' },
+  field: { gap: 4 },
+  fieldLabel: { fontSize: 15, fontWeight: '600' },
+  fieldHint: { fontSize: 13, lineHeight: 18 },
+  input: { borderWidth: 1, borderRadius: Radius.field, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
+  multiline: { minHeight: 110, textAlignVertical: 'top' },
+  segmented: { flexDirection: 'row', borderWidth: 1, borderRadius: Radius.field, overflow: 'hidden' },
+  segment: { flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center' },
+  segmentText: { fontSize: 15, fontWeight: '600' },
 });
+
+export function Field({
+  label,
+  hint,
+  multiline = false,
+  ...input
+}: { label: string; hint?: string; multiline?: boolean } & Omit<TextInputProps, 'multiline' | 'style'>) {
+  const theme = useTheme();
+  return (
+    <View style={styles.field}>
+      <Text style={[styles.fieldLabel, { color: theme.text }]}>{label}</Text>
+      <TextInput
+        {...input}
+        multiline={multiline}
+        placeholderTextColor={theme.textSecondary}
+        style={[
+          styles.input,
+          { backgroundColor: theme.background, borderColor: theme.border, color: theme.text },
+          multiline && styles.multiline,
+        ]}
+      />
+      {hint ? <Text style={[styles.fieldHint, { color: theme.textSecondary }]}>{hint}</Text> : null}
+    </View>
+  );
+}
+
+/** Wybór jednej z kilku opcji (np. rola). */
+export function Segmented<K extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { key: K; label: string }[];
+  value: K;
+  onChange: (key: K) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.segmented, { borderColor: theme.border }]}>
+      {options.map((o) => {
+        const active = o.key === value;
+        return (
+          <Pressable
+            key={o.key}
+            onPress={() => onChange(o.key)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: active }}
+            style={[styles.segment, active && { backgroundColor: theme.brand }]}>
+            <Text style={[styles.segmentText, { color: active ? theme.onBrand : theme.text }]}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}

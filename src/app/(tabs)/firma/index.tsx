@@ -1,64 +1,153 @@
-import { useQuery } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { api, errorMessage, unwrap } from '@/api/client';
-import type { Profile } from '@/api/types';
-import { Radius, Spacing } from '@/constants/theme';
+import { errorMessage } from '@/api/client';
+import { useMeta, useProfile, useSaveProfile, type ProfileFields } from '@/api/company';
+import { ChipSelect, TagInput } from '@/components/chips';
+import { Button, Card, Field, Notice, SectionTitle } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** Etap 1: podgląd profilu. Edycja (PUT /profile) dojdzie w etapie 5. */
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
 export default function CompanyTab() {
   const theme = useTheme();
-  const { data, error, isPending } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => unwrap(api.GET('/profile')) as Promise<Profile>,
-  });
+  const profile = useProfile();
+  const meta = useMeta();
+  const save = useSaveProfile();
+  // Zmiany użytkownika trzymamy osobno i nakładamy na dane z serwera — po zapisie wystarczy je wyczyścić.
+  const [draft, setDraft] = useState<Partial<ProfileFields>>({});
 
-  const rows: [string, string][] = data
-    ? [
-        ['Nazwa', data.name],
-        ['Opis', data.description],
-        ['Kody CPV', data.cpvPrefixes.join(', ')],
-        ['Słowa kluczowe', data.keywords.join(', ')],
-        ['Słowa wykluczające', data.excludedKeywords.join(', ')],
-        ['Województwa', data.provinces.length ? data.provinces.join(', ') : 'cała Polska'],
-        ['Rodzaje zamówień', data.orderTypes.length ? data.orderTypes.join(', ') : 'wszystkie'],
-        ['Doświadczenie', data.experience],
-        ['Zasoby', data.resources],
-      ]
-    : [];
+  const saved = profile.data;
+  const form = saved ? { ...saved, ...draft } : null;
+  const dirty = saved !== undefined && (Object.keys(draft) as (keyof ProfileFields)[]).some((k) => !same(draft[k], saved[k]));
+  const edit = <K extends keyof ProfileFields>(key: K) => (value: ProfileFields[K]) => {
+    setDraft((d) => ({ ...d, [key]: value }));
+    save.reset();
+  };
+
+  function submit() {
+    const changed: Partial<ProfileFields> = {};
+    if (saved) {
+      for (const k of Object.keys(draft) as (keyof ProfileFields)[]) {
+        if (!same(draft[k], saved[k])) Object.assign(changed, { [k]: draft[k] });
+      }
+    }
+    save.mutate(changed, { onSuccess: () => setDraft({}) });
+  }
 
   return (
     <>
       <Stack.Screen options={{ title: 'Firma' }} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-        {isPending ? <ActivityIndicator color={theme.brand} style={styles.pad} /> : null}
-        {error ? <Text style={[styles.pad, { color: theme.danger }]}>{errorMessage(error)}</Text> : null}
-        {data ? (
-          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {rows.map(([label, value], i) => (
-              <View key={label} style={[styles.row, i > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-                <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
-                <Text style={[styles.value, { color: value ? theme.text : theme.textSecondary }]}>{value || 'nie uzupełniono'}</Text>
-              </View>
-            ))}
-          </View>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        contentContainerStyle={styles.content}>
+        {profile.isPending ? <ActivityIndicator color={theme.brand} style={styles.pad} /> : null}
+        {profile.error && !saved ? <Notice tone="danger">{errorMessage(profile.error)}</Notice> : null}
+        {form ? (
+          <>
+            <Text style={[styles.lead, { color: theme.textSecondary }]}>
+              Na podstawie tego profilu dobieramy przetargi i oceniamy warunki udziału.
+            </Text>
+
+            <SectionTitle>Firma</SectionTitle>
+            <Card style={styles.group}>
+              <Field label="Nazwa firmy" value={form.name} onChangeText={edit('name')} autoCapitalize="sentences" />
+              <Field
+                label="Czym się zajmujecie"
+                hint="Kilka zdań. AI porówna z tym wymagania przetargu."
+                multiline
+                value={form.description}
+                onChangeText={edit('description')}
+              />
+            </Card>
+
+            <SectionTitle>Czego szukamy</SectionTitle>
+            <Card style={styles.group}>
+              <TagInput
+                label="Kody CPV"
+                hint="Wystarczy początek kodu, np. 3021 obejmuje sprzęt komputerowy."
+                values={form.cpvPrefixes}
+                onChange={edit('cpvPrefixes')}
+                keyboardType="number-pad"
+                placeholder="np. 30213000"
+              />
+              <TagInput
+                label="Słowa kluczowe"
+                hint="Szukamy ich w tytule przetargu."
+                values={form.keywords}
+                onChange={edit('keywords')}
+                placeholder="np. serwer"
+              />
+              <TagInput
+                label="Słowa wykluczające"
+                hint="Przetargi z tymi słowami pomijamy."
+                values={form.excludedKeywords}
+                onChange={edit('excludedKeywords')}
+                placeholder="np. remont"
+              />
+              {meta.data ? (
+                <>
+                  <ChipSelect
+                    label="Województwa"
+                    hint="Bez wyboru szukamy w całej Polsce."
+                    options={meta.data.provinces}
+                    selected={form.provinces}
+                    onChange={edit('provinces')}
+                  />
+                  <ChipSelect
+                    label="Rodzaje zamówień"
+                    hint="Bez wyboru uwzględniamy wszystkie."
+                    options={meta.data.orderTypes}
+                    selected={form.orderTypes}
+                    onChange={edit('orderTypes')}
+                  />
+                </>
+              ) : meta.error ? (
+                <Notice tone="warn">Nie udało się pobrać list województw i rodzajów zamówień. {errorMessage(meta.error)}</Notice>
+              ) : (
+                <ActivityIndicator color={theme.brand} />
+              )}
+            </Card>
+
+            <SectionTitle>Doświadczenie i zasoby</SectionTitle>
+            <Card style={styles.group}>
+              <Field
+                label="Doświadczenie"
+                hint="Zrealizowane zamówienia, referencje, kwoty."
+                multiline
+                value={form.experience}
+                onChangeText={edit('experience')}
+              />
+              <Field
+                label="Zasoby"
+                hint="Osoby z uprawnieniami, sprzęt, certyfikaty."
+                multiline
+                value={form.resources}
+                onChangeText={edit('resources')}
+              />
+            </Card>
+
+            {save.isError ? <Notice tone="danger">{errorMessage(save.error)}</Notice> : null}
+            {save.isSuccess && !dirty ? <Notice tone="brand">Profil zapisany. Dopasowania przetargów odświeżymy.</Notice> : null}
+            <View style={styles.save}>
+              <Button label={dirty ? 'Zapisz profil' : 'Brak zmian'} onPress={submit} busy={save.isPending} disabled={!dirty} />
+            </View>
+          </>
         ) : null}
-        <Text style={[styles.note, { color: theme.textSecondary }]}>
-          Profil edytujesz na razie na jestprzetarg.pl. Edycja w aplikacji pojawi się w kolejnej wersji.
-        </Text>
       </ScrollView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.three, gap: Spacing.three },
-  pad: { padding: Spacing.four, textAlign: 'center' },
-  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, paddingHorizontal: Spacing.three },
-  row: { paddingVertical: 12, gap: 4 },
-  label: { fontSize: 13, fontWeight: '600' },
-  value: { fontSize: 16, lineHeight: 22 },
-  note: { fontSize: 13, lineHeight: 18, textAlign: 'center' },
+  content: { padding: Spacing.three, gap: Spacing.three, paddingBottom: Spacing.six },
+  pad: { padding: Spacing.four },
+  lead: { fontSize: 14, lineHeight: 20 },
+  group: { gap: Spacing.three },
+  save: { marginTop: Spacing.two },
 });
