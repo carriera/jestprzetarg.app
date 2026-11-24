@@ -1,54 +1,48 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
- */
-
-import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/** Kolory marki z wersji WWW (jestprzetarg.pl) i ich odpowiedniki dla trybu ciemnego. */
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#1c2321',
+    textSecondary: '#5f6b66',
+    background: '#f6f5f1',
+    backgroundElement: '#ecebe5',
+    backgroundSelected: '#dcd9d0',
+    card: '#ffffff',
+    border: '#dcd9d0',
+    brand: '#0f5c4a',
+    brandSoft: '#e3f0ea',
+    onBrand: '#ffffff',
+    warn: '#9a5b00',
+    warnSoft: '#fbefd6',
+    danger: '#a3312b',
+    dangerSoft: '#f9e3e0',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#e8ece9',
+    textSecondary: '#9aa6a0',
+    background: '#121614',
+    backgroundElement: '#1b211e',
+    backgroundSelected: '#2b3430',
+    card: '#1b211e',
+    border: '#2b3430',
+    brand: '#4fb596',
+    brandSoft: '#17332b',
+    onBrand: '#0b1512',
+    warn: '#e0a84a',
+    warnSoft: '#3a2c10',
+    danger: '#e5766f',
+    dangerSoft: '#3d1b18',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type Theme = Record<ThemeColor, string>;
 
 export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
+  ios: { sans: 'system-ui', mono: 'ui-monospace' },
+  default: { sans: 'normal', mono: 'monospace' },
 });
 
 export const Spacing = {
@@ -61,5 +55,4 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const Radius = { card: 14, pill: 999, field: 10 } as const;
