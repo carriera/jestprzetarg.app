@@ -53,7 +53,17 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
-export function AnalysisSection({ tenderId, analysis }: { tenderId: number; analysis: AnalysisView | null }) {
+export function AnalysisSection({
+  tenderId,
+  analysis,
+  documentsCount,
+  onShowDocuments,
+}: {
+  tenderId: number;
+  analysis: AnalysisView | null;
+  documentsCount: number;
+  onShowDocuments: () => void;
+}) {
   const theme = useTheme();
   const run = useRunAnalysis(tenderId);
   // Liczymy po kluczu, bo mutacja mogła zostać uruchomiona przy poprzedniej wizycie na tym ekranie.
@@ -104,6 +114,17 @@ export function AnalysisSection({ tenderId, analysis }: { tenderId: number; anal
       {error}
       {assessment?.stale ? (
         <Notice tone="warn">Dokumentacja została przeanalizowana ponownie. Odśwież ocenę dla swojej firmy.</Notice>
+      ) : null}
+
+      {analysis.source === 'notice' ? (
+        <Notice tone="warn">
+          {documentsCount > 0
+            ? 'Ta analiza powstała tylko na podstawie ogłoszenia, bez dokumentacji. Przetarg ma już załączniki — przeanalizuj ponownie, żeby je uwzględnić.'
+            : 'Ta analiza powstała tylko na podstawie ogłoszenia: przetarg nie ma załączników w e-Zamówieniach. Szczegóły warunków trzeba potwierdzić w specyfikacji zamawiającego.'}
+        </Notice>
+      ) : null}
+      {analysis.source === 'notice' && documentsCount > 0 ? (
+        <Button label="Przeanalizuj z dokumentacją" onPress={() => start(true)} />
       ) : null}
 
       {a && decision ? (
@@ -204,8 +225,13 @@ export function AnalysisSection({ tenderId, analysis }: { tenderId: number; anal
 
       {questions.length > 0 ? (
         <>
-          <SectionTitle>Pytania do zamawiającego</SectionTitle>
+          <SectionTitle>Warto zapytać zamawiającego</SectionTitle>
+          <Text style={[styles.small, { color: theme.textSecondary }]}>
+            Niejasności, które AI radzi wyjaśnić przed złożeniem oferty. To nie są pytania innych wykonawców.
+            {documentsCount > 0 ? ' Odpowiedzi zamawiającego, które już opublikował, są w zakładce Załączniki.' : ''}
+          </Text>
           <Bullets items={questions} />
+          {documentsCount > 0 ? <Button label="Zobacz załączniki i wyjaśnienia" variant="outline" onPress={onShowDocuments} /> : null}
         </>
       ) : null}
 

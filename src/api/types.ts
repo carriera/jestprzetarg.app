@@ -38,3 +38,39 @@ export type Invitation = Req<S['Invitation']>;
 export type InvitePreview = Ok<'/invitations/{token}', 'get'>;
 export type InviteCreated = Ok<'/team/invitations', 'post', 201>;
 export type Role = User['role'];
+
+// Odpowiedź /tenders/{id}/similar jest w specyfikacji opisana tylko słownie, więc typy podajemy ręcznie
+// (zgodnie z SimilarSearch w repozytorium strony).
+export type SimilarResult = {
+  noticeNumber: string;
+  tenderId: string | null;
+  date: string;
+  organization: string;
+  city: string;
+  title: string;
+  outcome: 'umowa' | 'uniewaznienie' | 'inne';
+  multiPart: boolean;
+  offers: number | null;
+  low: number | null;
+  high: number | null;
+  chosen: number | null;
+  winner: string | null;
+  winnerSize: string | null;
+  gov: boolean;
+  edu: boolean;
+};
+export type SimilarStats = {
+  count: number;
+  offersMedian: number | null;
+  offersMin: number | null;
+  offersMax: number | null;
+  spreadMedian: number | null;
+  winners: { name: string; wins: number }[];
+};
+export type SimilarSearch = {
+  phrase: string;
+  results: SimilarResult[];
+  stats: SimilarStats;
+  truncated: boolean;
+  fetchedAt: number;
+};

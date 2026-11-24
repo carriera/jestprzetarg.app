@@ -7,13 +7,15 @@ import { errorMessage } from '@/api/client';
 import { markSeen, useTender, useTenderFlag } from '@/api/tenders';
 import type { TenderDetail, TenderResult } from '@/api/types';
 import { AnalysisSection, DECISION } from '@/components/analysis-section';
+import { DocumentsSection } from '@/components/documents-section';
+import { SimilarSection } from '@/components/similar-section';
 import { Button, Card, Notice } from '@/components/ui';
 import { ViewSwitcher } from '@/components/view-switcher';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deadlineLabel, isUrgent, money, shortDate } from '@/lib/format';
 
-type Section = 'analiza' | 'ogloszenie' | 'wynik';
+type Section = 'analiza' | 'ogloszenie' | 'zalaczniki' | 'wynik' | 'podobne';
 
 export default function TenderScreen() {
   const theme = useTheme();
@@ -92,13 +94,22 @@ export default function TenderScreen() {
               items={[
                 { key: 'analiza', label: 'Analiza' },
                 { key: 'ogloszenie', label: 'Ogłoszenie' },
+                { key: 'zalaczniki', label: 'Załączniki', count: tender.documents.length },
                 ...(tender.result ? [{ key: 'wynik' as const, label: 'Wynik' }] : []),
+                { key: 'podobne', label: 'Podobne' },
               ]}
               selected={section}
               onSelect={setSection}
             />
-            {section === 'analiza' || (section === 'wynik' && !tender.result) ? <AnalysisSection tenderId={tender.id} analysis={tender.analysis} /> : null}
+            {section === 'analiza' || (section === 'wynik' && !tender.result) ? <AnalysisSection
+                tenderId={tender.id}
+                analysis={tender.analysis}
+                documentsCount={tender.documents.length}
+                onShowDocuments={() => setSection('zalaczniki')}
+              /> : null}
             {section === 'ogloszenie' ? <NoticeSection tender={tender} /> : null}
+            {section === 'zalaczniki' ? <DocumentsSection documents={tender.documents} /> : null}
+            {section === 'podobne' ? <SimilarSection tenderId={tender.id} /> : null}
             {section === 'wynik' && tender.result ? <ResultSection result={tender.result} /> : null}
           </>
         ) : null}

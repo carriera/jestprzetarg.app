@@ -87,18 +87,22 @@ export function errorMessage(e: unknown): string {
   return e instanceof ApiError ? e.message : 'Coś poszło nie tak. Spróbuj ponownie.';
 }
 
+/** Nagłówek autoryzacji dla żądań wykonywanych poza klientem API (np. pobieranie plików). */
+export function authHeaders(): Record<string, string> {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+}
+
 /**
- * POST z długim limitem czasu. `fetch` w React Native zrywa na iOS połączenie po 60 s ciszy, a analiza AI
- * odpowiada dopiero po 1–2 minutach — XMLHttpRequest pozwala ustawić własny limit.
+ * Żądanie z długim limitem czasu. `fetch` w React Native zrywa na iOS połączenie po 60 s ciszy, a analiza AI
+ * i wyszukiwanie podobnych postępowań odpowiadają dopiero po 1–2 minutach — XMLHttpRequest pozwala ustawić własny limit.
  */
-export function postLong<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+function requestLong<T>(method: 'GET' | 'POST', path: string, body: unknown, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const network = () =>
-      reject(new ApiError(0, 'network', 'Połączenie z serwerem zostało przerwane.'));
-    xhr.open('POST', `${API_URL}${path}`);
+    const network = () => reject(new ApiError(0, 'network', 'Połączenie z serwerem zostało przerwane.'));
+    xhr.open(method, `${API_URL}${path}`);
     xhr.timeout = timeoutMs;
-    xhr.setRequestHeader('Content-Type', 'application/json');
+    if (body !== undefined) xhr.setRequestHeader('Content-Type', 'application/json');
     if (authToken) xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
     xhr.onerror = network;
     xhr.ontimeout = network;
@@ -118,6 +122,9 @@ export function postLong<T>(path: string, body: unknown, timeoutMs: number): Pro
       const err = (json as { error?: { code?: string; message?: string } } | null)?.error;
       reject(new ApiError(xhr.status, err?.code ?? 'unknown', err?.message ?? `Serwer odpowiedział błędem (${xhr.status}).`));
     };
-    xhr.send(JSON.stringify(body));
+    xhr.send(body === undefined ? undefined : JSON.stringify(body));
   });
 }
+
+export const postLong = <T>(path: string, body: unknown, timeoutMs: number) => requestLong<T>('POST', path, body, timeoutMs);
+export const getLong = <T>(path: string, timeoutMs: number) => requestLong<T>('GET', path, undefined, timeoutMs);

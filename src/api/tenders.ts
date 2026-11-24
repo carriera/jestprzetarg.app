@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 
-import { api, ApiError, postLong, unwrap } from './client';
-import type { AnalysisView, Tender, TenderDetail, TenderList } from './types';
+import { api, ApiError, getLong, postLong, unwrap } from './client';
+import type { AnalysisView, SimilarSearch, Tender, TenderDetail, TenderList } from './types';
 
 export const tenderKey = (id: number) => ['tender', id] as const;
 const analysisKey = (id: number) => ['analysis-run', id] as const;
@@ -96,3 +96,20 @@ export function useRunAnalysis(id: number) {
 }
 
 export { analysisKey };
+
+const SIMILAR_TIMEOUT_MS = 120_000;
+
+/** Podobne zakończone przetargi. Wyszukiwanie jest wolne (do 2 min), więc ruszamy dopiero na żądanie i trzymamy wynik dłużej. */
+export function useSimilar(id: number, phrase: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['similar', id, phrase ?? null],
+    queryFn: () =>
+      getLong<SimilarSearch>(
+        `/tenders/${id}/similar${phrase ? `?phrase=${encodeURIComponent(phrase)}` : ''}`,
+        SIMILAR_TIMEOUT_MS,
+      ),
+    enabled,
+    staleTime: 30 * 60 * 1000,
+    retry: false,
+  });
+}
