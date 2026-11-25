@@ -10,24 +10,20 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deadlineLabel, isUrgent, shortDate } from '@/lib/format';
 
-/** Szerokość, na jaką napis „Ignoruj” wysuwa się zza lewej krawędzi ekranu. */
-const IGNORE_LABEL_WIDTH = 120;
-/** Po przesunięciu o tyle punktów puszczenie karty ukrywa przetarg. */
-const IGNORE_THRESHOLD = 90;
+/** Szerokość napisu w odsłanianym polu. */
+const IGNORE_LABEL_WIDTH = 104;
+/** Po przesunięciu o tyle punktów puszczenie wiersza ignoruje przetarg. */
+const IGNORE_THRESHOLD = 96;
 
-/** Tło pod kartą: napis jedzie razem z jej lewą krawędzią, aż wysunie się w całości. */
+/** Czerwone pole odsłaniane pod wierszem: rośnie razem z przesunięciem, napis wyłania się od lewej krawędzi ekranu. */
 function IgnoreAction({ translation }: { translation: SharedValue<number> }) {
   const theme = useTheme();
-  const slide = useAnimatedStyle(() => ({
-    transform: [{ translateX: Math.min(translation.value, IGNORE_LABEL_WIDTH) - IGNORE_LABEL_WIDTH }],
-  }));
-  // Poza przesuwaniem tło jest niewidoczne — inaczej przebija przez kartę.
-  const visible = useAnimatedStyle(() => ({ opacity: translation.value > 0 ? 1 : 0 }));
+  const panel = useAnimatedStyle(() => ({ width: Math.max(translation.value, 0) }));
   return (
-    <Animated.View style={[styles.ignore, { backgroundColor: theme.danger }, visible]}>
-      <Animated.View style={[styles.ignoreLabel, slide]}>
-        <Text style={[styles.ignoreText, { color: '#ffffff' }]}>Ignoruj</Text>
-      </Animated.View>
+    <Animated.View style={[styles.ignore, { backgroundColor: theme.danger }, panel]}>
+      <View style={styles.ignoreLabel}>
+        <Text style={styles.ignoreText}>Ignoruj</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -61,7 +57,7 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
       onAccessibilityAction={(e) => {
         if (e.nativeEvent.actionName === 'ignore') ignore();
       }}
-      style={({ pressed }) => [styles.card, { backgroundColor: theme.card, borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.card, { backgroundColor: theme.background, borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
       accessibilityRole="link"
       accessibilityLabel={[
         tender.isNew ? 'Nowy.' : '',
@@ -125,7 +121,6 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
       renderLeftActions={(_progress, translation) => <IgnoreAction translation={translation} />}
       leftThreshold={IGNORE_THRESHOLD}
       overshootLeft={false}
-      containerStyle={styles.swipe}
       onSwipeableOpen={(direction) => {
         // Otwarcie lewej strony (ruch palca w prawo) biblioteka zgłasza jako RIGHT.
         if (direction === SwipeDirection.RIGHT) ignore();
@@ -136,7 +131,8 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, padding: Spacing.three, gap: 12 },
+  // Płaski wiersz na całą szerokość, z linią na dole — pełne tło, żeby zasłaniało pole „Ignoruj”.
+  card: { paddingHorizontal: Spacing.three, paddingVertical: 14, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', gap: 12 },
   score: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   scoreText: { fontSize: 16, fontWeight: '700', fontVariant: ['tabular-nums'] },
@@ -153,9 +149,7 @@ const styles = StyleSheet.create({
   star: { fontSize: 17 },
   deadline: { fontSize: 15, fontWeight: '600' },
   date: { fontWeight: '400' },
-  swipe: { borderRadius: Radius.card },
-  // Pełna szerokość wiersza: po puszczeniu karta odjeżdża w całości za prawą krawędź.
-  ignore: { flex: 1, borderRadius: Radius.card, justifyContent: 'center', overflow: 'hidden' },
+  ignore: { height: '100%', overflow: 'hidden', justifyContent: 'center' },
   ignoreLabel: { width: IGNORE_LABEL_WIDTH, alignItems: 'center' },
-  ignoreText: { fontSize: 17, fontWeight: '700' },
+  ignoreText: { color: '#ffffff', fontSize: 17, fontWeight: '700' },
 });

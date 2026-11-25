@@ -127,7 +127,6 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
         renderItem={({ item }) => <TenderCard tender={item} swipeToIgnore={view !== 'ukryte'} />}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Separator}
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
         ListFooterComponent={
@@ -151,14 +150,9 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
   );
 }
 
-function Separator() {
-  return <View style={styles.separator} />;
-}
-
 const styles = StyleSheet.create({
-  list: { padding: Spacing.three, paddingBottom: Spacing.six, flexGrow: 1 },
-  header: { gap: Spacing.two, marginBottom: Spacing.two },
-  separator: { height: 12 },
+  list: { paddingBottom: Spacing.six, flexGrow: 1 },
+  header: { gap: Spacing.two, padding: Spacing.three, paddingBottom: Spacing.two },
   banner: { borderRadius: Radius.field, padding: 12 },
   bannerText: { fontSize: 14, lineHeight: 20 },
   center: { paddingVertical: Spacing.six, alignItems: 'center', gap: Spacing.three },
