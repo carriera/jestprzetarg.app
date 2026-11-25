@@ -10,7 +10,7 @@ import { useSession } from '@/session/session';
 const STEPS = [
   'Na komputerze zaloguj się na jestprzetarg.pl.',
   'Otwórz zakładkę „Aplikacja mobilna” i kliknij „Pokaż kod QR”.',
-  'Zeskanuj kod zwykłym aparatem iPhone’a — otworzy aplikację i zaloguje. Możesz też użyć skanera w aplikacji (przycisk poniżej).',
+  'Otwórz Aparat w telefonie i skieruj go na kod. Dotknij żółtego linku, który się pojawi — otworzy tę aplikację i zaloguje.',
 ];
 
 /** Jedyny sposób zalogowania w aplikacji: jednorazowy kod QR pokazany na stronie WWW (hasła nie wpisujemy w telefonie). */
@@ -40,7 +40,10 @@ export default function LoginScreen() {
           ))}
         </Card>
 
-        <Button label="Zeskanuj kod QR" onPress={() => router.push('/skanuj')} />
+        <Button label="Skaner w aplikacji" variant="outline" onPress={() => router.push('/skanuj')} />
+        <Text style={[styles.hint, { color: theme.textSecondary }]}>
+          Skaner w aplikacji wymaga zgody na aparat. Jeśli telefon o nią nie zapyta, użyj Aparatu jak w kroku 3.
+        </Text>
 
         <Text style={[styles.hint, { color: theme.textSecondary }]}>
           Konto zakłada administrator firmy, wysyłając zaproszenie.
