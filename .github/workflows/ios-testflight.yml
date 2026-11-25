@@ -66,6 +66,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          [ -n "$WORKSPACE" ] || { echo "::error::Brak ios/*.xcworkspace — expo prebuild lub pod install nie powiodły się"; exit 1; }
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
           xcodebuild archive \
             -workspace "$WORKSPACE" \
