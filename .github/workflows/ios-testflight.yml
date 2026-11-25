@@ -59,6 +59,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/keys"
           printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey.p8"
 
+      - name: Revoke stale API-created certificates (limit certyfikatów Apple)
+        continue-on-error: true
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_PATH: ${{ runner.temp }}/keys/AuthKey.p8
+        run: node scripts/revoke-api-certificates.mjs
+
       - name: Archive
         env:
           # Wersja testowa pokazuje treść niezłapanych błędów JavaScript zamiast się zamykać (src/diagnostics.ts).
@@ -109,6 +117,15 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Revoke stale API-created certificates after build
+        continue-on-error: true
+        if: always()
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_PATH: ${{ runner.temp }}/keys/AuthKey.p8
+        run: node scripts/revoke-api-certificates.mjs
 
       - name: Remove key
         if: always()
