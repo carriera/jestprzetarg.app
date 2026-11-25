@@ -63,6 +63,8 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="login" />
+          <Stack.Screen name="skanuj" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="qr" />
           <Stack.Screen name="zaproszenie/[token]" />
         </Stack.Protected>
       </Stack>
