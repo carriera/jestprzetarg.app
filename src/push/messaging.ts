@@ -1,5 +1,5 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
-import { Platform } from 'react-native';
+import { Platform, TurboModuleRegistry } from 'react-native';
 
 type MessagingModule = typeof import('@react-native-firebase/messaging');
 type Api = { m: MessagingModule; messaging: ReturnType<MessagingModule['getMessaging']> };
@@ -15,6 +15,11 @@ export function messagingApi(): Api | null {
   if (cached !== undefined) return cached;
   cached = null;
   if (Platform.OS === 'web' || Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return cached;
+  // Moduły natywne sprawdzamy PRZED załadowaniem kodu JS Firebase. Gdy `require` woła się poza ładowaniem innego
+  // modułu, Metro łapie błąd inicjalizacji sam i zgłasza go jako krytyczny (`ErrorUtils.reportFatalError`), więc
+  // `try/catch` niżej go nie zobaczy, a aplikacja się zamknie. Tak padł build 4: „Native module NativeRNFBTurboApp is
+  // not registered” — pakiety Firebase nie są wpięte do buildu bez pliku GoogleService-Info.plist.
+  if (!TurboModuleRegistry.get('NativeRNFBTurboApp') || !TurboModuleRegistry.get('NativeRNFBTurboMessaging')) return cached;
   try {
     // Ładowanie leniwe: w Expo Go moduł natywny nie istnieje, a statyczny import przewróciłby start aplikacji.
     // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -47,8 +47,9 @@ export function usePush(enabled: boolean) {
   }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     const fb = messagingApi();
-    if (!enabled || !fb) return;
+    if (!fb) return;
     const open = (data: Data) => {
       const href = targetFor(data);
       if (href) router.push(href);
