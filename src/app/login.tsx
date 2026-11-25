@@ -10,7 +10,7 @@ import { useSession } from '@/session/session';
 const STEPS = [
   'Na komputerze zaloguj się na jestprzetarg.pl.',
   'Otwórz zakładkę „Aplikacja mobilna” i kliknij „Pokaż kod QR”.',
-  'Dotknij przycisku poniżej i skieruj aparat na kod.',
+  'Zeskanuj kod zwykłym aparatem iPhone’a — otworzy aplikację i zaloguje. Możesz też użyć skanera w aplikacji (przycisk poniżej).',
 ];
 
 /** Jedyny sposób zalogowania w aplikacji: jednorazowy kod QR pokazany na stronie WWW (hasła nie wpisujemy w telefonie). */

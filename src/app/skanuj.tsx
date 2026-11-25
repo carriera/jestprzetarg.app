@@ -49,6 +49,13 @@ export default function ScanScreen() {
   const askForCamera = useCallback(async () => {
     setAsking(true);
     setPermissionInfo(null);
+    // Gdy system nie pokaże okna zgody, prośba wisi bez końca — po kilku sekundach podpowiadamy, co zrobić.
+    const timer = setTimeout(() => {
+      setAsking(false);
+      setPermissionInfo(
+        'System nie pokazał okna zgody. Włącz aparat w ustawieniach telefonu albo zeskanuj kod zwykłym aparatem iPhone’a — otworzy aplikację i zaloguje.',
+      );
+    }, 6000);
     try {
       const result = await requestPermission();
       if (!result.granted) {
@@ -61,6 +68,7 @@ export default function ScanScreen() {
     } catch (e) {
       setPermissionInfo(`Nie udało się poprosić o dostęp do aparatu: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
+      clearTimeout(timer);
       setAsking(false);
     }
   }, [requestPermission]);
@@ -94,7 +102,12 @@ export default function ScanScreen() {
         ) : (
           <Button label="Otwórz ustawienia" onPress={() => Linking.openSettings()} />
         )}
-        {permissionInfo ? <Notice tone="warn">{permissionInfo}</Notice> : null}
+        {permissionInfo ? (
+          <>
+            <Notice tone="warn">{permissionInfo}</Notice>
+            <Button label="Otwórz ustawienia" variant="outline" onPress={() => Linking.openSettings()} />
+          </>
+        ) : null}
       </View>
     );
   } else {

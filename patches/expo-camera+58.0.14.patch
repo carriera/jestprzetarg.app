@@ -1,0 +1,18 @@
+diff --git a/node_modules/expo-camera/ios/Common/CameraPermissionsRequester.swift b/node_modules/expo-camera/ios/Common/CameraPermissionsRequester.swift
+index 22a986f..d73dac4 100644
+--- a/node_modules/expo-camera/ios/Common/CameraPermissionsRequester.swift
++++ b/node_modules/expo-camera/ios/Common/CameraPermissionsRequester.swift
+@@ -50,7 +50,12 @@ extension BaseCameraRequester {
+   }
+ 
+   func requestAccess(handler: @escaping (Bool) -> Void) {
+-    AVCaptureDevice.requestAccess(for: mediaType, completionHandler: handler)
++    let type = mediaType
++    // Jest Przetarg: na iOS 27 okno zgody nie pojawia się, gdy prośba przychodzi z wątku w tle
++    // (a moduł Expo woła ją właśnie z tła) — prośba wisi bez końca. Wołamy ją z głównego wątku.
++    DispatchQueue.main.async {
++      AVCaptureDevice.requestAccess(for: type, completionHandler: handler)
++    }
+   }
+ }
+ 
