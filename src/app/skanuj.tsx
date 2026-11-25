@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/client';
@@ -18,7 +18,9 @@ export default function ScanScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { signInWithCode } = useSession();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const [permissionInfo, setPermissionInfo] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Aparat zgłasza ten sam kod wiele razy na sekundę — blokada przed równoległymi próbami.
@@ -43,6 +45,34 @@ export default function ScanScreen() {
     }
   }
 
+  // Pytanie o zgodę z widocznym wynikiem: sama prośba mogła kończyć się cichym błędem, którego nie było widać.
+  const askForCamera = useCallback(async () => {
+    setAsking(true);
+    setPermissionInfo(null);
+    try {
+      const result = await requestPermission();
+      if (!result.granted) {
+        setPermissionInfo(
+          result.canAskAgain
+            ? 'Nie udzielono zgody. Spróbuj ponownie.'
+            : 'Dostęp do aparatu jest zablokowany. Włącz go w ustawieniach telefonu.',
+        );
+      }
+    } catch (e) {
+      setPermissionInfo(`Nie udało się poprosić o dostęp do aparatu: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setAsking(false);
+    }
+  }, [requestPermission]);
+
+  // Po powrocie z ustawień systemu odświeżamy stan zgody.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (status) => {
+      if (status === 'active') void getPermission();
+    });
+    return () => sub.remove();
+  }, [getPermission]);
+
   function retry() {
     setError(null);
     locked.current = false;
@@ -60,10 +90,11 @@ export default function ScanScreen() {
           Aby zeskanować kod QR, aplikacja potrzebuje dostępu do aparatu.
         </Text>
         {permission.canAskAgain ? (
-          <Button label="Zezwól na dostęp do aparatu" onPress={requestPermission} />
+          <Button label="Zezwól na dostęp do aparatu" onPress={askForCamera} busy={asking} />
         ) : (
           <Button label="Otwórz ustawienia" onPress={() => Linking.openSettings()} />
         )}
+        {permissionInfo ? <Notice tone="warn">{permissionInfo}</Notice> : null}
       </View>
     );
   } else {

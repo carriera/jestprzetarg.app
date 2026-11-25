@@ -12,6 +12,10 @@ import { SessionProvider, useSession } from '@/session/session';
 
 SplashScreen.preventAutoHideAsync();
 
+// Bez tego Expo Router porządkuje ekrany po długości nazwy (nie po kolejności w pliku), więc po dodaniu trasy `qr`
+// (2 znaki) to ona, a nie `login` (5 znaków), stała się ekranem startowym dla niezalogowanego. `anchor` wymusza `login`.
+export const unstable_settings = { anchor: 'login' };
+
 // Ulubione, ukryte i „obejrzane” zmieniają też inni członkowie zespołu, więc dane odświeżamy po powrocie do aplikacji.
 focusManager.setEventListener((setFocused) => {
   const sub = AppState.addEventListener('change', (status) => setFocused(status === 'active'));

@@ -38,7 +38,7 @@ export default function QrLinkScreen() {
           <>
             <Notice tone="danger">{error}</Notice>
             <Button label="Zeskanuj nowy kod" onPress={() => router.replace('/skanuj')} />
-            <Button label="Zaloguj hasłem" variant="outline" onPress={() => router.replace('/login')} />
+            <Button label="Wróć do logowania" variant="outline" onPress={() => router.replace('/login')} />
           </>
         ) : (
           <>
