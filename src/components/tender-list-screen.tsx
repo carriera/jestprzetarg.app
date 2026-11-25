@@ -44,7 +44,8 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
   });
 
   const first = query.data?.pages[0];
-  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  // Ukrycie (np. gestem „Ignoruj”) jest optymistyczne: karta znika od razu, zanim serwer odeśle nową listę.
+  const items = (query.data?.pages.flatMap((p) => p.items) ?? []).filter((t) => view === 'ukryte' || !t.isHidden);
   const counts = first?.counts;
 
   async function refresh() {
@@ -123,7 +124,7 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
       <FlatList
         data={items}
         keyExtractor={(t) => String(t.id)}
-        renderItem={({ item }) => <TenderCard tender={item} />}
+        renderItem={({ item }) => <TenderCard tender={item} swipeToIgnore={view === 'wszystkie'} />}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={Separator}

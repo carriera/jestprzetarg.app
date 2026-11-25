@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ApiError } from '@/api/client';
 import { Colors } from '@/constants/theme';
@@ -90,10 +91,13 @@ export default function RootLayout() {
       }),
   );
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <RootNavigator />
-      </SessionProvider>
-    </QueryClientProvider>
+    // Gesty (przesunięcie karty przetargu) wymagają tego widoku u korzenia aplikacji.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <RootNavigator />
+        </SessionProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

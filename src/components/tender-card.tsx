@@ -1,13 +1,46 @@
 import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import Swipeable, { SwipeDirection } from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
+import { errorMessage } from '@/api/client';
+import { useTenderFlag } from '@/api/tenders';
 import type { Tender } from '@/api/types';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { deadlineLabel, isUrgent, shortDate } from '@/lib/format';
 
-export function TenderCard({ tender }: { tender: Tender }) {
+/** Szerokość, na jaką napis „Ignoruj” wysuwa się zza lewej krawędzi ekranu. */
+const IGNORE_LABEL_WIDTH = 120;
+/** Po przesunięciu o tyle punktów puszczenie karty ukrywa przetarg. */
+const IGNORE_THRESHOLD = 90;
+
+/** Tło pod kartą: napis jedzie razem z jej lewą krawędzią, aż wysunie się w całości. */
+function IgnoreAction({ translation }: { translation: SharedValue<number> }) {
   const theme = useTheme();
+  const slide = useAnimatedStyle(() => ({
+    transform: [{ translateX: Math.min(translation.value, IGNORE_LABEL_WIDTH) - IGNORE_LABEL_WIDTH }],
+  }));
+  return (
+    <View style={[styles.ignore, { backgroundColor: theme.danger }]}>
+      <Animated.View style={[styles.ignoreLabel, slide]}>
+        <Text style={[styles.ignoreText, { color: theme.onBrand }]}>Ignoruj</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * Karta przetargu. Z `swipeToIgnore` przesunięcie w prawo dodaje przetarg do ukrytych (ignorowanych);
+ * cofnąć to można w „Więcej → Ukryte”.
+ */
+export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; swipeToIgnore?: boolean }) {
+  const theme = useTheme();
+  const hidden = useTenderFlag(tender.id, 'hidden');
+  const ignore = () =>
+    hidden.mutate(true, {
+      onError: (e) => Alert.alert('Nie udało się zignorować przetargu', errorMessage(e)),
+    });
   const score = tender.match?.score ?? null;
   const scoreColor = score === null ? theme.textSecondary : score >= 70 ? theme.brand : score >= 40 ? theme.warn : theme.textSecondary;
   const urgent = isUrgent(tender.daysLeft);
@@ -17,9 +50,14 @@ export function TenderCard({ tender }: { tender: Tender }) {
   const deadline = deadlineLabel(tender.daysLeft);
   const date = shortDate(tender.deadline);
 
-  return (
+  const card = (
     <Link href={{ pathname: '/przetarg/[id]', params: { id: tender.id } }} asChild>
     <Pressable
+      // VoiceOver nie zna gestu przesunięcia — ta sama akcja jest dostępna z pokrętła czynności.
+      accessibilityActions={swipeToIgnore ? [{ name: 'ignore', label: 'Ignoruj' }] : undefined}
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === 'ignore') ignore();
+      }}
       style={({ pressed }) => [styles.card, { backgroundColor: theme.card, borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
       accessibilityRole="link"
       accessibilityLabel={[
@@ -78,6 +116,21 @@ export function TenderCard({ tender }: { tender: Tender }) {
     </Pressable>
     </Link>
   );
+
+  if (!swipeToIgnore) return card;
+  return (
+    <Swipeable
+      renderLeftActions={(_progress, translation) => <IgnoreAction translation={translation} />}
+      leftThreshold={IGNORE_THRESHOLD}
+      overshootLeft={false}
+      containerStyle={styles.swipe}
+      onSwipeableOpen={(direction) => {
+        // Otwarcie lewej strony (ruch palca w prawo) biblioteka zgłasza jako RIGHT.
+        if (direction === SwipeDirection.RIGHT) ignore();
+      }}>
+      {card}
+    </Swipeable>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -98,4 +151,9 @@ const styles = StyleSheet.create({
   star: { fontSize: 17 },
   deadline: { fontSize: 15, fontWeight: '600' },
   date: { fontWeight: '400' },
+  swipe: { borderRadius: Radius.card },
+  // Pełna szerokość wiersza: po puszczeniu karta odjeżdża w całości za prawą krawędź.
+  ignore: { flex: 1, borderRadius: Radius.card, justifyContent: 'center', overflow: 'hidden' },
+  ignoreLabel: { width: IGNORE_LABEL_WIDTH, alignItems: 'center' },
+  ignoreText: { fontSize: 17, fontWeight: '700' },
 });
