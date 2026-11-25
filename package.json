@@ -50,5 +50,12 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "patch-package"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "buildFromSource": [
+        "expo-camera"
+      ]
+    }
+  }
 }
