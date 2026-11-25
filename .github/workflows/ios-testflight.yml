@@ -1,4 +1,4 @@
-# Buduje podpisaną aplikację iOS i wysyła ją do TestFlight. Uruchamiany ręcznie (Actions → iOS TestFlight → Run workflow),
+# Buduje podpisaną aplikację iOS (obraz xcode-27: macOS 27 + Xcode 27; Apple wymaga SDK iOS 27 od kwietnia 2027, ITMS-90725) i wysyła ją do TestFlight. Uruchamiany ręcznie (Actions → iOS TestFlight → Run workflow),
 # bo minuty macOS w prywatnym repozytorium liczą się wielokrotnie.
 #
 # Wymagane sekrety repozytorium (Settings → Secrets and variables → Actions):
@@ -17,7 +17,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4

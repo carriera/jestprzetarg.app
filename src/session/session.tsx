@@ -17,7 +17,6 @@ type State =
 
 type Session = {
   state: State;
-  signIn: (email: string, password: string) => Promise<void>;
   /** Logowanie jednorazowym kodem QR wygenerowanym na stronie WWW przez zalogowanego użytkownika. */
   signInWithCode: (code: string) => Promise<void>;
   /** Zakłada konto z zaproszenia i od razu loguje. */
@@ -96,13 +95,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      await establish(await unwrap(api.POST('/auth/login', { body: { email, password } })));
-    },
-    [establish],
-  );
-
   const signInWithCode = useCallback(
     async (code: string) => {
       const deviceName = Device.deviceName ?? Device.modelName ?? undefined;
@@ -127,8 +119,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [clear]);
 
   const value = useMemo(
-    () => ({ state, signIn, signInWithCode, acceptInvite, signOut }),
-    [state, signIn, signInWithCode, acceptInvite, signOut],
+    () => ({ state, signInWithCode, acceptInvite, signOut }),
+    [state, signInWithCode, acceptInvite, signOut],
   );
   return <SessionContext value={value}>{children}</SessionContext>;
 }
