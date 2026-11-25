@@ -83,6 +83,11 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
             {[place, tender.orderTypeName].filter(Boolean).join(' · ')}
           </Text>
         </View>
+        {tender.isFavorite ? (
+          <Text style={[styles.star, { color: theme.warn }]} accessibilityLabel="Ulubiony">
+            ★
+          </Text>
+        ) : null}
       </View>
 
       {tender.match && tender.match.reasons.length > 0 ? (
@@ -104,7 +109,6 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
               <Text style={[styles.badgeText, { color: theme.onBrand }]}>NOWY</Text>
             </View>
           ) : null}
-          {tender.isFavorite ? <Text style={[styles.star, { color: theme.warn }]}>★</Text> : null}
         </View>
         <Text style={[styles.deadline, { color: urgent ? theme.danger : closed ? theme.textSecondary : theme.text }]}>
           {urgent ? '⏰ ' : ''}
@@ -146,7 +150,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  star: { fontSize: 17 },
+  star: { fontSize: 20, lineHeight: 22 },
   deadline: { fontSize: 15, fontWeight: '600' },
   date: { fontWeight: '400' },
   ignore: { height: '100%', overflow: 'hidden', justifyContent: 'center' },
