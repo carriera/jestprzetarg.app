@@ -68,6 +68,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logowanie kodem QR ze strony WWW
+         * @description Zalogowany użytkownik otwiera na stronie WWW „Aplikacja mobilna” i pokazuje kod QR o treści `jestprzetarg://qr?kod=KOD`. Aplikacja wysyła `KOD` jako `code`. Kod jest jednorazowy i ważny 2 minuty. `deviceName` pojawi się na stronie jako potwierdzenie.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        code: string;
+                        deviceName?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthResult"];
+                    };
+                };
+                /** @description Niepoprawny kod */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Kod wygasł albo został użyty */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -144,6 +208,7 @@ export interface paths {
                                 id?: number;
                                 name?: string;
                             };
+                            plan?: components["schemas"]["Plan"];
                         };
                     };
                 };
@@ -753,6 +818,15 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
+                /** @description Plan firmy nie obejmuje wyników postępowań (`plan_required`) */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
                 /** @description Nie znaleziono */
                 404: {
                     headers: {
@@ -882,6 +956,15 @@ export interface paths {
                 };
                 /** @description Brak ważnego tokenu */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Limit planu: wyczerpane analizy albo brak aktywnego planu (`plan_limit`) */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1675,6 +1758,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Plan firmy i wykorzystanie limitów. Limit null oznacza brak limitu. */
+        Plan: {
+            /** @enum {unknown} */
+            plan?: "trial" | "start" | "firma" | "pro" | "internal" | "none";
+            label?: string;
+            /** @description false po okresie próbnym albo bez planu — analizy są wtedy zablokowane */
+            active?: boolean;
+            analyses?: {
+                limit?: number | null;
+                used?: number;
+                /** @description Dokupione analizy ponad limit */
+                extra?: number;
+                remaining?: number | null;
+                /** Format: date-time */
+                periodStart?: string;
+                /** Format: date-time */
+                periodEnd?: string | null;
+            };
+            users?: {
+                limit?: number | null;
+                used?: number;
+                pendingInvites?: number;
+            };
+            /** @description Wyniki postępowań i podobne przetargi z cenami */
+            results?: boolean;
+            /** Format: date-time */
+            trialEndsAt?: string | null;
+            /** @description Dlaczego nowa analiza jest zablokowana */
+            blockReason?: string | null;
+        };
         Error: {
             error?: {
                 code?: string;
@@ -1704,8 +1817,11 @@ export interface components {
         TenderSummary: {
             id?: number;
             title?: string;
-            /** @enum {unknown} */
-            orderType?: "Works" | "Delivery" | "Services";
+            /**
+             * @description Pusty, gdy źródło nie podaje rodzaju zamówienia
+             * @enum {unknown}
+             */
+            orderType?: "Works" | "Delivery" | "Services" | "";
             orderTypeName?: string;
             organization?: {
                 name?: string;
@@ -1714,6 +1830,12 @@ export interface components {
                 provinceName?: string;
             };
             cpv?: string;
+            /**
+             * @description Źródło ogłoszenia: BZP, TED albo Baza Konkurencyjności
+             * @enum {unknown}
+             */
+            source?: "bzp" | "ted" | "bk";
+            sourceName?: string;
             publicationDate?: string | null;
             /** @description Termin składania ofert (ISO 8601) */
             deadline?: string | null;
@@ -1770,6 +1892,16 @@ export interface components {
             /** @description Analiza ogólna jest prywatna dla firmy (nie jest wspólna) */
             private?: boolean;
             general?: components["schemas"]["GeneralAnalysis"];
+            /** @description Zamawiający opublikował dokumenty po wykonaniu analizy ogólnej (wyjaśnienia, zmiany SWZ, ogłoszenia o zmianie) — mogły się zmienić terminy lub warunki. Lista w newDocuments; odświeżenie: POST analizy. */
+            outdated?: boolean;
+            newDocuments?: {
+                /** @description Identyfikator dokumentu (jak w Document.id) */
+                id?: number;
+                name?: string;
+                fileName?: string;
+                /** Format: date-time */
+                publishedAt?: string;
+            }[];
             assessment?: {
                 id?: number;
                 /** Format: date-time */
@@ -1845,14 +1977,19 @@ export interface components {
         };
         TenderDetail: components["schemas"]["TenderSummary"] & {
             noticeNumber?: string;
+            /** @description Pusty dla ogłoszeń spoza BZP */
             bzpNumber?: string;
             platformId?: string | null;
             platformUrl?: string | null;
+            /** @description Adres ogłoszenia w TED albo Bazie Konkurencyjności; null dla BZP */
+            sourceUrl?: string | null;
             proceedingUrl?: string | null;
             noticeText?: string;
             /** @description Tylko z ?html=1 */
             noticeHtml?: string;
             result?: components["schemas"]["TenderResult"] | null;
+            /** @description Plan firmy nie obejmuje wyników postępowań; `result` jest wtedy null */
+            resultLocked?: boolean;
             analysis?: components["schemas"]["AnalysisView"] | null;
             documents?: components["schemas"]["Document"][];
         };

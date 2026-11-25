@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/client';
@@ -19,6 +20,7 @@ import { useSession } from '@/session/session';
 
 export default function LoginScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { state, signIn } = useSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -109,6 +111,17 @@ export default function LoginScreen() {
             )}
           </Pressable>
 
+          <Pressable
+            onPress={() => router.push('/skanuj')}
+            disabled={busy}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.button, styles.outline, { borderColor: theme.brand, opacity: pressed ? 0.85 : 1 }]}>
+            <Text style={[styles.buttonText, { color: theme.brand }]}>Zaloguj kodem QR</Text>
+          </Pressable>
+          <Text style={[styles.hint, { color: theme.textSecondary }]}>
+            Kod QR pokażesz na komputerze: jestprzetarg.pl → Aplikacja mobilna.
+          </Text>
+
           <Text style={[styles.hint, { color: theme.textSecondary }]}>
             Konto zakłada administrator firmy, wysyłając zaproszenie.
           </Text>
@@ -129,5 +142,6 @@ const styles = StyleSheet.create({
   notice: { borderRadius: Radius.field, padding: 12, marginTop: Spacing.three },
   button: { borderRadius: Radius.field, minHeight: 50, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.four },
   buttonText: { fontSize: 17, fontWeight: '600' },
+  outline: { borderWidth: 1, marginTop: Spacing.three },
   hint: { fontSize: 13, textAlign: 'center', marginTop: Spacing.three },
 });

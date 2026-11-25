@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -17,6 +18,8 @@ type State =
 type Session = {
   state: State;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Logowanie jednorazowym kodem QR wygenerowanym na stronie WWW przez zalogowanego użytkownika. */
+  signInWithCode: (code: string) => Promise<void>;
   /** Zakłada konto z zaproszenia i od razu loguje. */
   acceptInvite: (input: { token: string; password: string; name?: string; email?: string }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -100,6 +103,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [establish],
   );
 
+  const signInWithCode = useCallback(
+    async (code: string) => {
+      const deviceName = Device.deviceName ?? Device.modelName ?? undefined;
+      await establish(await unwrap(api.POST('/auth/qr', { body: { code, deviceName } })));
+    },
+    [establish],
+  );
+
   const acceptInvite = useCallback(
     async (input: { token: string; password: string; name?: string; email?: string }) => {
       await establish(await unwrap(api.POST('/auth/accept-invite', { body: input })));
@@ -115,6 +126,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await clear(false);
   }, [clear]);
 
-  const value = useMemo(() => ({ state, signIn, acceptInvite, signOut }), [state, signIn, acceptInvite, signOut]);
+  const value = useMemo(
+    () => ({ state, signIn, signInWithCode, acceptInvite, signOut }),
+    [state, signIn, signInWithCode, acceptInvite, signOut],
+  );
   return <SessionContext value={value}>{children}</SessionContext>;
 }
