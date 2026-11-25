@@ -73,7 +73,7 @@ export default function NotificationsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Powiadomienia', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: 'Powiadomienia' }} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         {prefs.isPending ? <ActivityIndicator color={theme.brand} style={styles.pad} /> : null}
         {prefs.error ? <Notice tone="danger">{errorMessage(prefs.error)}</Notice> : null}

@@ -7,11 +7,11 @@ export default function TabStack() {
   return (
     <Stack
       screenOptions={{
-        headerLargeTitle: true,
+        // Zwykły, zwarty nagłówek: duży tytuł iOS zostawiał nad sobą pusty pasek i zabierał sporo miejsca na liście.
+        headerLargeTitle: false,
         headerShadowVisible: false,
         headerTintColor: theme.brand,
         headerTitleStyle: { color: theme.text },
-        headerLargeTitleStyle: { color: theme.text },
         headerStyle: { backgroundColor: theme.background },
         contentStyle: { backgroundColor: theme.background },
       }}

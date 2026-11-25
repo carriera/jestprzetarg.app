@@ -78,7 +78,7 @@ export default function TeamScreen() {
   if (!isAdmin) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Zespół', headerLargeTitle: false }} />
+        <Stack.Screen options={{ title: 'Zespół' }} />
         <View style={styles.content}>
           <Notice tone="warn">Zespołem zarządza administrator firmy.</Notice>
         </View>
@@ -88,7 +88,7 @@ export default function TeamScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Zespół', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: 'Zespół' }} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustKeyboardInsets
