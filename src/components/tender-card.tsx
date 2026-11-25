@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Swipeable, { SwipeDirection } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
@@ -38,6 +38,7 @@ function IgnoreAction({ translation }: { translation: SharedValue<number> }) {
  */
 export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; swipeToIgnore?: boolean }) {
   const theme = useTheme();
+  const router = useRouter();
   const hidden = useTenderFlag(tender.id, 'hidden');
   const ignore = () =>
     hidden.mutate(true, {
@@ -53,8 +54,8 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
   const date = shortDate(tender.deadline);
 
   const card = (
-    <Link href={{ pathname: '/przetarg/[id]', params: { id: tender.id } }} asChild>
     <Pressable
+      onPress={() => router.push({ pathname: '/przetarg/[id]', params: { id: tender.id } })}
       // VoiceOver nie zna gestu przesunięcia — ta sama akcja jest dostępna z pokrętła czynności.
       accessibilityActions={swipeToIgnore ? [{ name: 'ignore', label: 'Ignoruj' }] : undefined}
       onAccessibilityAction={(e) => {
@@ -116,7 +117,6 @@ export function TenderCard({ tender, swipeToIgnore = false }: { tender: Tender; 
         </Text>
       </View>
     </Pressable>
-    </Link>
   );
 
   if (!swipeToIgnore) return card;
