@@ -1,3 +1,4 @@
+/* global __dirname */
 const fs = require('node:fs');
 
 // Natywny Firebase (powiadomienia push) jest wpinany do aplikacji tylko wtedy, gdy build ma plik
