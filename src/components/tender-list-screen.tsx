@@ -124,7 +124,7 @@ export function TenderListScreen({ title, views }: { title: string; views: ListV
       <FlatList
         data={items}
         keyExtractor={(t) => String(t.id)}
-        renderItem={({ item }) => <TenderCard tender={item} swipeToIgnore={view === 'wszystkie'} />}
+        renderItem={({ item }) => <TenderCard tender={item} swipeToIgnore={view !== 'ukryte'} />}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={Separator}

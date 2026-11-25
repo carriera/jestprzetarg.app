@@ -21,12 +21,14 @@ function IgnoreAction({ translation }: { translation: SharedValue<number> }) {
   const slide = useAnimatedStyle(() => ({
     transform: [{ translateX: Math.min(translation.value, IGNORE_LABEL_WIDTH) - IGNORE_LABEL_WIDTH }],
   }));
+  // Poza przesuwaniem tło jest niewidoczne — inaczej przebija przez kartę.
+  const visible = useAnimatedStyle(() => ({ opacity: translation.value > 0 ? 1 : 0 }));
   return (
-    <View style={[styles.ignore, { backgroundColor: theme.danger }]}>
+    <Animated.View style={[styles.ignore, { backgroundColor: theme.danger }, visible]}>
       <Animated.View style={[styles.ignoreLabel, slide]}>
-        <Text style={[styles.ignoreText, { color: theme.onBrand }]}>Ignoruj</Text>
+        <Text style={[styles.ignoreText, { color: '#ffffff' }]}>Ignoruj</Text>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 
