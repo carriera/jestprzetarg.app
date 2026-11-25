@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Swipeable, { SwipeDirection } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
@@ -18,13 +18,18 @@ const IGNORE_THRESHOLD = 96;
 /** Czerwone pole odsłaniane pod wierszem: rośnie razem z przesunięciem, napis wyłania się od lewej krawędzi ekranu. */
 function IgnoreAction({ translation }: { translation: SharedValue<number> }) {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const panel = useAnimatedStyle(() => ({ width: Math.max(translation.value, 0) }));
+  // Biblioteka mierzy szerokość akcji na początku gestu (przesunięcie = 0), więc kontener musi mieć stałą szerokość
+  // wiersza — animowana jest dopiero czerwona część w środku. Inaczej wiersz nie ma dokąd się przesunąć.
   return (
-    <Animated.View style={[styles.ignore, { backgroundColor: theme.danger }, panel]}>
-      <View style={styles.ignoreLabel}>
-        <Text style={styles.ignoreText}>Ignoruj</Text>
-      </View>
-    </Animated.View>
+    <View style={{ width, height: '100%' }}>
+      <Animated.View style={[styles.ignore, { backgroundColor: theme.danger }, panel]}>
+        <View style={styles.ignoreLabel}>
+          <Text style={styles.ignoreText}>Ignoruj</Text>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
