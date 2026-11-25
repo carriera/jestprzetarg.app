@@ -2,10 +2,14 @@
 // Każda budowa na świeżym runnerze zakłada nowy certyfikat; Apple limituje ich liczbę, a przerwane budowy
 // zostawiają je na koncie, aż kolejna kończy się błędem „maximum number of certificates”.
 // Zmienne: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_PATH; DRY_RUN=1 tylko wypisuje, co by usunięto.
+import { Buffer } from 'node:buffer';
 import { createSign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-const { ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_PATH, DRY_RUN } = process.env;
+const ASC_KEY_ID = process.env.ASC_KEY_ID;
+const ASC_ISSUER_ID = process.env.ASC_ISSUER_ID;
+const ASC_KEY_P8_PATH = process.env.ASC_KEY_P8_PATH;
+const DRY_RUN = process.env.DRY_RUN;
 if (!ASC_KEY_ID || !ASC_ISSUER_ID || !ASC_KEY_P8_PATH) {
   console.error('Brak ASC_KEY_ID, ASC_ISSUER_ID lub ASC_KEY_P8_PATH');
   process.exit(1);
