@@ -84,6 +84,10 @@ export async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
 }
 
 export function errorMessage(e: unknown): string {
+  // Komunikat serwera przy limicie planu zachęca do zakupu i podaje cenę, a aplikacja w App Store nie może
+  // kierować do płatności poza sklepem — pokazujemy neutralną treść.
+  if (e instanceof ApiError && e.code === 'plan_limit')
+    return 'Plan Twojej firmy nie pozwala teraz na kolejną analizę. Szczegóły zna administrator firmy.';
   return e instanceof ApiError ? e.message : 'Coś poszło nie tak. Spróbuj ponownie.';
 }
 

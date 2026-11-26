@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View
 import { errorMessage } from '@/api/client';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { messagingApi } from '@/push/messaging';
 import { useSession } from '@/session/session';
 
 function MenuLink({ href, label }: { href: Href; label: string }) {
@@ -78,7 +79,8 @@ export default function MoreTab() {
           </Text>
         </View>
         <View style={styles.links}>
-          <MenuLink href={'/wiecej/powiadomienia' as Href} label="Powiadomienia" />
+          {/* Build bez Firebase nie potrafi odbierać powiadomień — nie pokazujemy ekranu, który nic nie zrobi. */}
+          {messagingApi() ? <MenuLink href={'/wiecej/powiadomienia' as Href} label="Powiadomienia" /> : null}
           <MenuLink href={'/wiecej/ukryte' as Href} label="Ukryte przetargi" />
           {user.role === 'admin' ? <MenuLink href={'/wiecej/zespol' as Href} label="Zespół i zaproszenia" /> : null}
         </View>

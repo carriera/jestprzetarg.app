@@ -14,6 +14,11 @@ name: iOS TestFlight
 
 on:
   workflow_dispatch:
+    inputs:
+      store:
+        description: Wersja do sklepu (bez okna diagnostycznego z treścią błędów)
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -70,7 +75,8 @@ jobs:
       - name: Archive
         env:
           # Wersja testowa pokazuje treść niezłapanych błędów JavaScript zamiast się zamykać (src/diagnostics.ts).
-          EXPO_PUBLIC_SHOW_FATAL_ERRORS: '1'
+          # Build przeznaczony do recenzji App Store (store=true) ma zachowywać się jak zwykła aplikacja.
+          EXPO_PUBLIC_SHOW_FATAL_ERRORS: ${{ inputs.store && '0' || '1' }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
