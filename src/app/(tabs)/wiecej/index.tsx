@@ -2,6 +2,7 @@ import { Link, Stack, type Href } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { errorMessage } from '@/api/client';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/session/session';
@@ -23,13 +24,13 @@ function MenuLink({ href, label }: { href: Href; label: string }) {
 
 export default function MoreTab() {
   const theme = useTheme();
-  const { state, signOut } = useSession();
+  const { state, signOut, deleteAccount } = useSession();
   const [busy, setBusy] = useState(false);
   if (state.status !== 'signedIn') return null;
   const { user, companyName } = state;
 
   function confirmSignOut() {
-    Alert.alert('Wylogować?', 'Aby wrócić, trzeba będzie podać e-mail i hasło.', [
+    Alert.alert('Wylogować?', 'Aby wrócić, trzeba będzie zeskanować nowy kod QR ze strony jestprzetarg.pl.', [
       { text: 'Anuluj', style: 'cancel' },
       {
         text: 'Wyloguj',
@@ -40,6 +41,29 @@ export default function MoreTab() {
         },
       },
     ]);
+  }
+
+  function confirmDelete() {
+    Alert.alert(
+      'Usunąć konto?',
+      `Konto ${user.email} zostanie trwale usunięte i nie będzie można się na nie zalogować — ani w aplikacji, ani na stronie. Dane firmy (profil, ulubione, analizy) zostaną dla pozostałych osób z zespołu.`,
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Usuń konto',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            try {
+              await deleteAccount();
+            } catch (e) {
+              setBusy(false);
+              Alert.alert('Nie udało się usunąć konta', errorMessage(e));
+            }
+          },
+        },
+      ],
+    );
   }
 
   return (
@@ -65,6 +89,9 @@ export default function MoreTab() {
           style={[styles.button, { borderColor: theme.danger, opacity: busy ? 0.5 : 1 }]}>
           {busy ? <ActivityIndicator color={theme.danger} /> : <Text style={[styles.buttonText, { color: theme.danger }]}>Wyloguj</Text>}
         </Pressable>
+        <Pressable onPress={confirmDelete} disabled={busy} accessibilityRole="button" style={styles.deleteButton} hitSlop={8}>
+          <Text style={[styles.deleteText, { color: theme.textSecondary }]}>Usuń konto</Text>
+        </Pressable>
       </ScrollView>
     </>
   );
@@ -80,4 +107,6 @@ const styles = StyleSheet.create({
   meta: { fontSize: 15 },
   button: { borderWidth: 1, borderRadius: Radius.field, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontSize: 16, fontWeight: '600' },
+  deleteButton: { alignSelf: 'center', minHeight: 44, justifyContent: 'center' },
+  deleteText: { fontSize: 15, textDecorationLine: 'underline' },
 });

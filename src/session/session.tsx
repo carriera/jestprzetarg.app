@@ -22,6 +22,8 @@ type Session = {
   /** Zakłada konto z zaproszenia i od razu loguje. */
   acceptInvite: (input: { token: string; password: string; name?: string; email?: string }) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Usuwa konto na serwerze i wylogowuje. Rzuca błąd z komunikatem serwera, gdy usunięcie jest niemożliwe. */
+  deleteAccount: () => Promise<void>;
 };
 
 const SessionContext = createContext<Session | null>(null);
@@ -118,9 +120,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await clear(false);
   }, [clear]);
 
+  const deleteAccount = useCallback(async () => {
+    await unwrap(api.DELETE('/auth/me'));
+    await clear(false);
+  }, [clear]);
+
   const value = useMemo(
-    () => ({ state, signInWithCode, acceptInvite, signOut }),
-    [state, signInWithCode, acceptInvite, signOut],
+    () => ({ state, signInWithCode, acceptInvite, signOut, deleteAccount }),
+    [state, signInWithCode, acceptInvite, signOut, deleteAccount],
   );
   return <SessionContext value={value}>{children}</SessionContext>;
 }

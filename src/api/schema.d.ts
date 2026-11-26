@@ -79,7 +79,7 @@ export interface paths {
         put?: never;
         /**
          * Logowanie kodem QR ze strony WWW
-         * @description Zalogowany użytkownik otwiera na stronie WWW „Aplikacja mobilna” i pokazuje kod QR o treści `jestprzetarg://qr?kod=KOD`. Aplikacja wysyła `KOD` jako `code`. Kod jest jednorazowy i ważny 2 minuty. `deviceName` pojawi się na stronie jako potwierdzenie.
+         * @description Zalogowany użytkownik otwiera na stronie WWW „Aplikacja mobilna” i pokazuje kod QR o treści `jestprzetarg://qr?kod=KOD`. Aplikacja wysyła `KOD` jako `code`. Kod jest jednorazowy i ważny 2 minuty. `deviceName` pojawi się na stronie jako potwierdzenie. Tym samym polem aplikacja wysyła kod wpisany ręcznie (kod konta demonstracyjnego).
          */
         post: {
             parameters: {
@@ -234,7 +234,59 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Usuwa własne konto
+         * @description Usuwa konto zalogowanego użytkownika razem z jego sesjami i urządzeniami; token przestaje działać. Dane firmy (profil, ulubione, analizy) zostają dla pozostałych osób. 409, gdy użytkownik jest jedynym administratorem firmy, w której są inne osoby — `message` wyjaśnia, co zrobić.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                        };
+                    };
+                };
+                /** @description Brak ważnego tokenu */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Nie znaleziono */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Jedyny administrator firmy */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -1025,6 +1077,59 @@ export interface paths {
                     content: {
                         "application/json": {
                             items?: components["schemas"]["Document"][];
+                        };
+                    };
+                };
+                /** @description Brak ważnego tokenu */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenders/{id}/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pytania i odpowiedzi (wyjaśnienia treści SWZ)
+         * @description Od najnowszego pisma.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            total?: number;
+                            items?: components["schemas"]["QuestionsDocument"][];
                         };
                     };
                 };
@@ -1876,6 +1981,28 @@ export interface components {
             available?: boolean;
             /** @description Ścieżka do pobrania (wymaga Bearer) */
             downloadUrl?: string | null;
+        };
+        /** @description Pismo zamawiającego z wyjaśnieniami treści SWZ i odczytane z niego pytania wykonawców z odpowiedziami (dosłownie, w kolejności z pisma). */
+        QuestionsDocument: {
+            /** @description Identyfikator pliku (jak w Document.id); pobranie: /documents/{documentId} */
+            documentId?: number;
+            name?: string;
+            fileName?: string;
+            publishedAt?: string | null;
+            /**
+             * @description ok = pytania odczytane; pending = jeszcze nie odczytane (pojawią się po synchronizacji); empty = brak pytań albo plik nieczytelny — treść tylko w pliku
+             * @enum {string}
+             */
+            status?: "ok" | "empty" | "pending";
+            questions?: {
+                id?: number;
+                /** @description Numer pytania z pisma; pusty, gdy pytania nie są numerowane */
+                number?: string;
+                question?: string;
+                answer?: string;
+                /** @description Odpowiedź zmienia dokumentację (termin, wymaganie, umowę…), a nie tylko wyjaśnia */
+                changesSwz?: boolean;
+            }[];
         };
         /** @description Analiza przetargu dla firmy: część ogólna (wspólna dla wszystkich firm, bez danych żadnej firmy) i ocena firmy zalogowanego użytkownika (null, gdy jeszcze jej nie wykonano). */
         AnalysisView: {
